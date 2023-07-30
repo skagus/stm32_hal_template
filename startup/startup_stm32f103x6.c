@@ -42,6 +42,7 @@ void Reset_Handler(void)
 
 	SystemInit();
 //	__libc_init_array();
+	SystemCoreClockUpdate();
 	main();
 	while (1);
 }
@@ -163,39 +164,22 @@ void (*const g_pfnVectors[])(void) =
 	TIM1_CC_IRQHandler,
 	TIM2_IRQHandler,
 	TIM3_IRQHandler,
-	TIM4_IRQHandler,
+	0,
 	I2C1_EV_IRQHandler,
 	I2C1_ER_IRQHandler,
-	I2C2_EV_IRQHandler,
-	I2C2_ER_IRQHandler,
+	0, 0,
 	SPI1_IRQHandler,
-	SPI2_IRQHandler,
+	0,
 	USART1_IRQHandler,
 	USART2_IRQHandler,
-	USART3_IRQHandler,
+	0,
 	EXTI15_10_IRQHandler,
 	RTCAlarm_IRQHandler,
 	USBWakeUp_IRQHandler,
-	TIM12_IRQHandler,
-	TIM13_IRQHandler,
-	TIM14_IRQHandler,
-	0,
-	ADC3_IRQHandler,
-	FSMC_IRQHandler,
-	0,
-	TIM5_IRQHandler,
-	SPI3_IRQHandler,
-	UART4_IRQHandler,
-	UART5_IRQHandler,
-	TIM6_DAC_IRQHandler,
-	TIM7_IRQHandler,
-	DMA2_Channel1_IRQHandler,
-	DMA2_Channel2_IRQHandler,
-	DMA2_Channel3_IRQHandler,
-	DMA2_Channel4_5_IRQHandler,
-	DMA2_Channel5_IRQHandler,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0,
 #if defined(STM32F10X_LD_VL) || (defined STM32F10X_MD_VL)
 	[0x1CC / 4] = (void(*))0xF108F85F
 #elif defined(STM32F10X_HD_VL)

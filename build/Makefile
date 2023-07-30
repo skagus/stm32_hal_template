@@ -26,6 +26,7 @@ CSRC =	\
 		hal/stm32f1xx_hal_cortex.c \
 		hal/stm32f1xx_hal_rcc.c \
 		hal/stm32f1xx_hal_gpio.c \
+		hal/stm32f1xx_hal_uart.c \
 		mcu/system_stm32f1xx.c \
 		$(VER_FILE)
 
@@ -54,6 +55,7 @@ DEP =	$(OBJ:%.o=%.d)
 DEFINE = 
 # STM32F103C8T6 <-- MD performance.
 DEFINE += -DSTM32F103x6
+DEFINE += -DUSE_HAL_DRIVER
 #DEFINE += -DHSE_VALUE=8000000
 ################  Library directory.
 PRJ_LIB_DIR =
