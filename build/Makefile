@@ -21,13 +21,14 @@ VER_FILE = version.c
 # Source file들은 project TOP 에서의 위치를 나타낸다.
 CSRC =	\
 		startup/startup_stm32f103x6.c \
-		app/main.c \
 		hal/stm32f1xx_hal.c \
 		hal/stm32f1xx_hal_cortex.c \
 		hal/stm32f1xx_hal_rcc.c \
 		hal/stm32f1xx_hal_gpio.c \
 		hal/stm32f1xx_hal_uart.c \
 		mcu/system_stm32f1xx.c \
+		app/main.c \
+		app/print.c \
 		$(VER_FILE)
 
 #		src/flash_spi.c \
@@ -186,7 +187,7 @@ LDFLAGS += -fmessage-length=0
 LDFLAGS += -ffunction-sections
 LDFLAGS += -fdata-sections
 #LDFLAGS += -fsigned-char
-#LDFLAGS += -fno-common
+LDFLAGS += -fno-common
 
 ################### Action #################
 # add @ for silent.

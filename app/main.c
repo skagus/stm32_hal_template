@@ -1,6 +1,7 @@
 // Sample pragmas to cope with warnings. Please note the related line at
 // the end of this function, used to pop the compiler diagnostics status.
 
+#include <string.h>
 #include "stm32f1xx.h"
 #include "main.h"
 
@@ -26,13 +27,8 @@ void _Blink(int nPeriod, uint32_t nCnt)
 	}
 }
 
-int main(int argc, char* argv[])
+void _GpioInit(void)
 {
-	UNUSED(argc);
-	UNUSED(argv);
-
-	HAL_Init();
-
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 
 	GPIO_InitTypeDef GPIO_InitStruct;
@@ -41,10 +37,10 @@ int main(int argc, char* argv[])
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
 	GPIO_InitStruct.Pin = GPIO_PIN_13;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+}
 
-	/* Blinking */
-	_Blink(500, 10);
-
+void _ClockInit(void)
+{
 	/* Enable HSE Oscillator and activate PLL with HSE as source */
 	RCC_OscInitTypeDef oscinitstruct = {0};
 	oscinitstruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
@@ -59,8 +55,6 @@ int main(int argc, char* argv[])
 		while(1) {}
 	}
 
-	_Blink(100, 10);
-
 	/* Select PLL as system clock source and configure the HCLK (AHB), PCLK1 (APB1), PCLK2 (APB2) clocks */
 	RCC_ClkInitTypeDef clkinitstruct = {0};
 	clkinitstruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
@@ -74,27 +68,29 @@ int main(int argc, char* argv[])
 		/* Initialization Error */
 		while(1) {}
 	}
+}
 
+
+int main(int argc, char* argv[])
+{
+	UNUSED(argc);
+	UNUSED(argv);
+
+	HAL_Init();
+
+	_GpioInit();
+	_Blink(500, 10);
+
+	_ClockInit();
 	_Blink(1000, 10);
 
-
-	UART_HandleTypeDef hUART1;
-	hUART1.Instance = USART1;
-	hUART1.Init.BaudRate = 115200;
-	hUART1.Init.WordLength = UART_WORDLENGTH_8B;
-	hUART1.Init.StopBits = UART_STOPBITS_1;
-	hUART1.Init.Parity = UART_PARITY_NONE;
-	hUART1.Init.Mode = UART_MODE_TX_RX;
-	hUART1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	if(HAL_OK !=  HAL_UART_Init(&hUART1))
-	{
-		_Blink(20, 0);
-	}
+	print_init();
 
 	char* szHello = "Hello\n";
+	int nCnt = 0;
 	while(1)
 	{
-		HAL_UART_Transmit(&hUART1, szHello, strlen(szHello), 100000);
+		printf("Loop: %5d\n", nCnt++);
 		_Blink(100, 10);
 	}
 	return 0;
