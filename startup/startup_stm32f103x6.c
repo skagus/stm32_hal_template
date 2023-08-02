@@ -4,6 +4,14 @@
 #include <core_cm3.h>
 
 extern void _estack(void); // to force type checking
+
+void _InitFault()
+{
+	SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;  // enable div zero fault.
+	// raise each handler.
+	// SCB->SHCSR |=  SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_MEMFAULTENA_Msk;
+}
+
 void default_handler(void)
 {
 	printf("Default Handler\n");
@@ -43,25 +51,9 @@ void __attribute__((naked)) Reset_Handler(void)
 	SystemInit();
 //	__libc_init_array();
 	SystemCoreClockUpdate();
+	_InitFault();
 	main();
 	while (1);
-}
-
-/**
-  * @brief  Print GP register value that pushed at Exception Entry.
-  * @param  pStk Stack pointer that keep GP register.
-  * @retval None
-  */
-void _PrintExceptionStk(unsigned* pStk)
-{
-	printf("R0:  %8X\n", pStk[0]);
-	printf("R1:  %8X\n", pStk[1]);
-	printf("R2:  %8X\n", pStk[2]);
-	printf("R3:  %8X\n", pStk[3]);
-	printf("R12: %8X\n", pStk[4]);
-	printf("LR:  %8X\n", pStk[5]);
-	printf("PC:  %8X\n", pStk[6]);
-	printf("PSR: %8X\n", pStk[7]);
 }
 
 /**
@@ -87,15 +79,31 @@ void __attribute__((naked)) Fault_Handler(void)
 		: [sp] "=r" (nSP), [lr] "=r" (nLR):
 	);
 
-	printf("SCB->CFSR: %08X\n", SCB->CFSR);
-	printf("SCB->MMFAR: %08X\n", SCB->MMFAR);
-	printf("SCB->BFAR: %08X\n", SCB->BFAR);
-	printf("Fault\nSP: %8X, LR: %8X\n", nSP, nLR);
-	_PrintExceptionStk((unsigned*)nSP);
+	printf("\n====Fault====\nSP: %8X, LR: %8X\n", nSP, nLR);
+	unsigned* pStk = (unsigned*)nSP;
+	printf("R0:  %8X\n", pStk[0]);
+	printf("R1:  %8X\n", pStk[1]);
+	printf("R2:  %8X\n", pStk[2]);
+	printf("R3:  %8X\n", pStk[3]);
+	printf("R12: %8X\n", pStk[4]);
+	printf("LR:  %8X\n", pStk[5]);
+	printf("PC:  %8X\n", pStk[6]);
+	printf("PSR: %8X\n", pStk[7]);
+
+	printf("\nSCB->HFSR: %08X\n", SCB->HFSR);
+	printf("  SCB->CFSR: %08X\n", SCB->CFSR);
+	unsigned* pDwSCB = (unsigned*)SCB;
+	for(unsigned i = 0; i < (sizeof(*SCB) / 4); i++)
+	{
+		if(0 == (i % 4))
+		{
+			printf("\nOff:%4X: ", i * 16);
+		}
+		printf("%08X ", pDwSCB[i]);
+	}
 
 	while(1);
 }
-
 
 /* Vector Table */
 

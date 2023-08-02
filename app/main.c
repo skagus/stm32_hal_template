@@ -70,6 +70,14 @@ void _ClockInit(void)
 	}
 }
 
+int volatile _TrigFault(int nA, int nB)
+{
+	UNUSED(nA); UNUSED(nB);
+//	*(int*)(_Blink) = nA;	// Bus Fault: Write read only flash.
+	return (nA / nB);  // Usage Fault: Devide by Zero.
+//	asm volatile(".word	0xFFAACCBB"); // Usage Fault: Inst decode failure.
+	return 0;
+}
 
 int main(int argc, char* argv[])
 {
@@ -82,15 +90,15 @@ int main(int argc, char* argv[])
 	_Blink(500, 10);
 
 	_ClockInit();
-	_Blink(1000, 10);
+//	_Blink(1000, 10);
 
 	print_init();
 
 	int nCnt = 0;
 	while(1)
 	{
-		printf("Loop: %5d\n", nCnt++);
-		_Blink(100, 10);
+		printf("Loop: %8X, %8X\n", nCnt++, _TrigFault(20, 0));
+		_Blink(500, 10);
 	}
 	return 0;
 }
