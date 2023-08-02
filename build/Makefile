@@ -29,6 +29,7 @@ CSRC =	\
 		mcu/system_stm32f1xx.c \
 		app/main.c \
 		app/print.c \
+		app/stm32f1xx_it.c \
 		$(VER_FILE)
 
 #		src/flash_spi.c \
@@ -180,7 +181,7 @@ LDFLAGS += -Xlinker --gc-sections
 LDFLAGS += -Xlinker --print-memory-usage
 LDFLAGS += -mcpu=$(MCU)
 LDFLAGS += --specs=nosys.specs
-#LDFLAGS += --specs=nano.specs
+LDFLAGS += --specs=nano.specs
 #LDFLAGS += -mcmodel=medany
 #LDFLAGS += -msmall-data-limit=8
 LDFLAGS += -fmessage-length=0

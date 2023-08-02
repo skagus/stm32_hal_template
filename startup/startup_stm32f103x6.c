@@ -4,9 +4,9 @@
 #include <core_cm3.h>
 
 extern void _estack(void); // to force type checking
-void Reset_Handler(void);
 void default_handler(void)
 {
+	printf("Default Handler\n");
 	while (1);
 }
 
@@ -22,7 +22,7 @@ extern unsigned long _ebss;
 
 extern int main(void);
 
-void Reset_Handler(void)
+void __attribute__((naked)) Reset_Handler(void)
 {
 	unsigned long *src, *dst;
 	src = &_sidata;
@@ -47,13 +47,63 @@ void Reset_Handler(void)
 	while (1);
 }
 
+/**
+  * @brief  Print GP register value that pushed at Exception Entry.
+  * @param  pStk Stack pointer that keep GP register.
+  * @retval None
+  */
+void _PrintExceptionStk(unsigned* pStk)
+{
+	printf("R0:  %8X\n", pStk[0]);
+	printf("R1:  %8X\n", pStk[1]);
+	printf("R2:  %8X\n", pStk[2]);
+	printf("R3:  %8X\n", pStk[3]);
+	printf("R12: %8X\n", pStk[4]);
+	printf("LR:  %8X\n", pStk[5]);
+	printf("PC:  %8X\n", pStk[6]);
+	printf("PSR: %8X\n", pStk[7]);
+}
+
+/**
+  * @brief  This function handles Hard Fault exception.
+  * @param  None
+  * @retval None
+  */
+void __attribute__((naked)) Fault_Handler(void)  
+{
+	unsigned nSP;
+	unsigned nLR;
+	/**
+	 * LR == 0xFFFFFFF1 / 0xFFFFFFF9 : MSP is valid.
+	 * LR == 0xFFFFFFFD : PSP is valid.
+	*/
+	__asm volatile
+	(
+		"tst    lr, #4; "
+		"ite    eq;     "
+		"mrseq  %[sp], msp;"
+		"mrsne  %[sp], psp;"
+		"mov    %[lr], lr; "
+		: [sp] "=r" (nSP), [lr] "=r" (nLR):
+	);
+
+	printf("SCB->CFSR: %08X\n", SCB->CFSR);
+	printf("SCB->MMFAR: %08X\n", SCB->MMFAR);
+	printf("SCB->BFAR: %08X\n", SCB->BFAR);
+	printf("Fault\nSP: %8X, LR: %8X\n", nSP, nLR);
+	_PrintExceptionStk((unsigned*)nSP);
+
+	while(1);
+}
+
+
 /* Vector Table */
 
 void NMI_Handler(void) __attribute__((weak, alias("default_handler")));
-void HardFault_Handler(void) __attribute__((weak, alias("default_handler")));
-void MemMange_Handler(void) __attribute__((weak, alias("default_handler")));
-void BusFault_Handler(void) __attribute__((weak, alias("default_handler")));
-void UsageFault_Handler(void) __attribute__((weak, alias("default_handler")));
+void HardFault_Handler(void) __attribute__((weak, alias("Fault_Handler")));
+void MemMange_Handler(void) __attribute__((weak, alias("Fault_Handler")));
+void BusFault_Handler(void) __attribute__((weak, alias("Fault_Handler")));
+void UsageFault_Handler(void) __attribute__((weak, alias("Fault_Handler")));
 void SVC_Handler(void) __attribute__((weak, alias("default_handler")));
 void DebugMon_Handler(void) __attribute__((weak, alias("default_handler")));
 void PendSV_Handler(void) __attribute__((weak, alias("default_handler")));

@@ -86,7 +86,6 @@ int main(int argc, char* argv[])
 
 	print_init();
 
-	char* szHello = "Hello\n";
 	int nCnt = 0;
 	while(1)
 	{
