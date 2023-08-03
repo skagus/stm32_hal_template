@@ -3,11 +3,20 @@
 #include <stm32f1xx.h>
 #include <core_cm3.h>
 
+#define EN_UNALIGNED_EXCEPTION		(0)
+
 extern void _estack(void); // to force type checking
 
-void _InitFault()
+void _InitFault(void)
 {
-	SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;  // enable div zero fault.
+	SCB->CCR |= 
+//		SCB_CCR_STKALIGN_Msk |		// Stack alignment 4 --> 8 bytes
+//		SCB_CCR_BFHFNMIGN_Msk |
+#if EN_UNALIGNED_EXCEPTION
+		SCB_CCR_UNALIGN_TRP_Msk |	// raise Un-algined memory access.
+#endif
+		SCB_CCR_DIV_0_TRP_Msk;		// raise Div 0 Exception.
+
 	// raise each handler.
 	// SCB->SHCSR |=  SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_MEMFAULTENA_Msk;
 }
@@ -49,7 +58,7 @@ void __attribute__((naked)) Reset_Handler(void)
 	}
 
 	SystemInit();
-//	__libc_init_array();
+//	__libc_init_array(); // Should call this if C++
 	SystemCoreClockUpdate();
 	_InitFault();
 	main();
@@ -78,8 +87,7 @@ void __attribute__((naked)) Fault_Handler(void)
 		"mov    %[lr], lr; "
 		: [sp] "=r" (nSP), [lr] "=r" (nLR):
 	);
-
-	printf("\n====Fault====\nSP: %8X, LR: %8X\n", nSP, nLR);
+	printf("\n==== Fault ====\nSP: %8X, LR: %8X\n", nSP, nLR);
 	unsigned* pStk = (unsigned*)nSP;
 	printf("R0:  %8X\n", pStk[0]);
 	printf("R1:  %8X\n", pStk[1]);
@@ -90,8 +98,8 @@ void __attribute__((naked)) Fault_Handler(void)
 	printf("PC:  %8X\n", pStk[6]);
 	printf("PSR: %8X\n", pStk[7]);
 
-	printf("\nSCB->HFSR: %08X\n", SCB->HFSR);
-	printf("  SCB->CFSR: %08X\n", SCB->CFSR);
+	printf("\n==== SCB dump ====\nSCB->HFSR: %08lX\n", SCB->HFSR);
+	printf("  SCB->CFSR: %08lX\n", SCB->CFSR);
 	unsigned* pDwSCB = (unsigned*)SCB;
 	for(unsigned i = 0; i < (sizeof(*SCB) / 4); i++)
 	{

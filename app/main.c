@@ -5,6 +5,8 @@
 #include "stm32f1xx.h"
 #include "main.h"
 
+extern char* gpVersion;
+
 void _mydelay(uint32_t nCycles)
 {
 	while(nCycles-- > 0)
@@ -70,14 +72,27 @@ void _ClockInit(void)
 	}
 }
 
-int volatile _TrigFault(int nA, int nB)
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+int _TrigFault(int nA, int nB)
 {
 	UNUSED(nA); UNUSED(nB);
+
 //	*(int*)(_Blink) = nA;	// Bus Fault: Write read only flash.
-	return (nA / nB);  // Usage Fault: Devide by Zero.
+//	return (nA / nB);  // Usage Fault: Devide by Zero.
 //	asm volatile(".word	0xFFAACCBB"); // Usage Fault: Inst decode failure.
+
+	// Unaligned access.
+	uint8_t aByte[8] = {0,};
+	printf("Ch Value: %2X %2X %2X %2X\n",
+		aByte[0], aByte[1], aByte[2], aByte[3]);
+	*((uint32_t*)(aByte + 1)) = 10;
+	printf("Ch Value: %2X %2X %2X %2X\n",
+		aByte[0], aByte[1], aByte[2], aByte[3]);
+
 	return 0;
 }
+#pragma GCC pop_options
 
 int main(int argc, char* argv[])
 {
@@ -87,17 +102,18 @@ int main(int argc, char* argv[])
 	HAL_Init();
 
 	_GpioInit();
-	_Blink(500, 10);
 
 	_ClockInit();
 //	_Blink(1000, 10);
 
+	_Blink(1000, 10);
 	print_init();
-
+	printf("\n\nFW build %s\n", gpVersion);
 	int nCnt = 0;
 	while(1)
 	{
-		printf("Loop: %8X, %8X\n", nCnt++, _TrigFault(20, 0));
+		printf("Loop: %8X\n", nCnt++);
+		_TrigFault(20, 0);
 		_Blink(500, 10);
 	}
 	return 0;

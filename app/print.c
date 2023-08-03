@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <string.h>
 #include "stm32f1xx.h"
 
 UART_HandleTypeDef ghUART1;
@@ -14,8 +15,14 @@ void print_init(void)
 	ghUART1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
 	if(HAL_OK !=  HAL_UART_Init(&ghUART1))
 	{
-		_Blink(20, 0);
+		//
 	}
+}
+
+int puts(const char* szString)
+{
+	HAL_UART_Transmit(&ghUART1, (uint8_t*)szString, strlen(szString), 100000);
+	return 0;
 }
 
 int printf(const char* szFmt, ...)
@@ -29,5 +36,6 @@ int printf(const char* szFmt, ...)
 	va_end(ap);
 
 	HAL_UART_Transmit(&ghUART1, (uint8_t*)buffer, len, 100000);
-	return 0;
+	return len;
 }
+
