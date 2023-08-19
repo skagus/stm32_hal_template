@@ -97,7 +97,7 @@ SECTIONS
 {
 	.text :
 	{
-		KEEP(*(.isr_vector))            /* Startup code */
+		KEEP(*(.entry))            /* Startup code */
 		*(.text)                   /* code */
 		*(.text.*)                 /* remaining code */
 		*(.rodata)                 /* read-only data (constants) */

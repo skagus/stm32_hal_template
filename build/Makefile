@@ -286,8 +286,13 @@ size: $(TARGET).elf
 	@$(SIZE) --format=gnu $<
 	@$(SIZE) --format=sysv --radix=16 --common $<
 
-prog: $(TARGET).bin
+prog_uart: $(TARGET).bin
 	stm32_isp.exe stm32_conf.ini
+
+prog_swd: $(TARGET).bin
+	st-link_cli -P $(TARGET).hex
+	st-link_cli -Rst
+
 
 run: $(TARGET).bin
 	stm32_isp.exe stm32_run.ini

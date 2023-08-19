@@ -5,6 +5,17 @@
 
 #define EN_UNALIGNED_EXCEPTION		(0)
 
+typedef void (*IsrFunc)(void);
+
+extern unsigned long _sidata;
+extern unsigned long _sdata;
+extern unsigned long _edata;
+extern unsigned long _sbss;
+extern unsigned long _ebss;
+
+const IsrFunc gaVectorTable[];
+
+extern int main(void);
 extern void _estack(void); // to force type checking
 
 void _InitFault(void)
@@ -31,16 +42,11 @@ void __attribute__((weak)) __libc_init_array(void) {}
 
 // Linker supplied pointers
 
-extern unsigned long _sidata;
-extern unsigned long _sdata;
-extern unsigned long _edata;
-extern unsigned long _sbss;
-extern unsigned long _ebss;
 
-extern int main(void);
-
-void __attribute__((naked)) Reset_Handler(void)
+void __attribute__((naked)) Reset_Handler(void);
+void Reset_Handler(void)
 {
+
 	unsigned long *src, *dst;
 	src = &_sidata;
 	dst = &_sdata;
@@ -59,6 +65,7 @@ void __attribute__((naked)) Reset_Handler(void)
 
 	SystemInit();
 //	__libc_init_array(); // Should call this if C++
+	SCB->VTOR = gaVectorTable;
 	SystemCoreClockUpdate();
 	_InitFault();
 	main();
@@ -184,8 +191,15 @@ void DMA2_Channel3_IRQHandler(void) __attribute__((weak, alias("default_handler"
 void DMA2_Channel4_5_IRQHandler(void) __attribute__((weak, alias("default_handler")));
 void DMA2_Channel5_IRQHandler(void) __attribute__((weak, alias("default_handler")));
 
-__attribute__((section(".isr_vector")))
-void (*const g_pfnVectors[])(void) = 
+__attribute__((section(".entry"), aligned(256)))
+const IsrFunc gaEntry[] = 
+{
+	_estack,
+	Reset_Handler,
+};
+
+__attribute__((aligned(256)))
+const IsrFunc gaVectorTable[] = 
 {
 	_estack,
 	Reset_Handler,

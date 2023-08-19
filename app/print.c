@@ -2,6 +2,19 @@
 #include <string.h>
 #include "stm32f1xx.h"
 
+#if 0
+void print_init(void){}
+
+int _write(int file, char *ptr, int len)
+{
+	for(int i = 0; i < len; i++)
+	{
+		ITM_SendChar(*ptr++);
+	}
+	return len;
+}
+
+#else
 UART_HandleTypeDef ghUART1;
 
 void print_init(void)
@@ -38,4 +51,5 @@ int printf(const char* szFmt, ...)
 	HAL_UART_Transmit(&ghUART1, (uint8_t*)buffer, len, 100000);
 	return len;
 }
+#endif
 

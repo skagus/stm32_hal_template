@@ -7,6 +7,9 @@
 
 extern char* gpVersion;
 
+#define MSEC(x) 	(x)
+#define SEC(x)		(MSEC((x)*1000))
+
 void _mydelay(uint32_t nCycles)
 {
 	while(nCycles-- > 0)
@@ -106,7 +109,7 @@ int main(int argc, char* argv[])
 	_ClockInit();
 //	_Blink(1000, 10);
 
-	_Blink(1000, 10);
+	_Blink(MSEC(500), 10);
 	print_init();
 	printf("\n\nFW build %s\n", gpVersion);
 	int nCnt = 0;
@@ -114,7 +117,7 @@ int main(int argc, char* argv[])
 	{
 		printf("Loop: %8X\n", nCnt++);
 		_TrigFault(20, 0);
-		_Blink(500, 10);
+		_Blink(MSEC(200), 10);
 	}
 	return 0;
 }
