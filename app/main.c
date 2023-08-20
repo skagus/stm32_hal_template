@@ -1,127 +1,212 @@
-// Sample pragmas to cope with warnings. Please note the related line at
-// the end of this function, used to pop the compiler diagnostics status.
-
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2022 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
+#include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include "stm32f1xx.h"
 #include "main.h"
 
-extern char* gpVersion;
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 
-#define MSEC(x) 	(x)
-#define SEC(x)		(MSEC((x)*1000))
+/* USER CODE END Includes */
 
-void _mydelay(uint32_t nCycles)
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef huart1;
+/* USER CODE BEGIN PV */
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_USART1_UART_Init(void);
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+
+#define MAX_BUF_SIZE		(64)
+static char gaBuf[MAX_BUF_SIZE];
+void myPrintf(const char* format, ...)
 {
-	while(nCycles-- > 0)
-	{
-		__asm volatile("nop");
-	}
+    va_list ap;
+    va_start(ap, format);
+    vsprintf(gaBuf, format, ap);
+    va_end(ap);
+
+	int nLen = strlen(gaBuf);
+	HAL_UART_Transmit(&huart1, (uint8_t*)gaBuf, nLen, 100);
 }
+/* USER CODE END 0 */
 
-void SysTick_Handler(void)
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+
+int main(void)
 {
-	HAL_IncTick();
-}
-
-void _Blink(int nPeriod, uint32_t nCnt)
-{
-	while(--nCnt > 0)
-	{
-		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-		HAL_Delay(nPeriod);
-	}
-}
-
-void _GpioInit(void)
-{
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-
-	GPIO_InitTypeDef GPIO_InitStruct;
-	GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull  = GPIO_PULLUP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	GPIO_InitStruct.Pin = GPIO_PIN_13;
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-}
-
-void _ClockInit(void)
-{
-	/* Enable HSE Oscillator and activate PLL with HSE as source */
-	RCC_OscInitTypeDef oscinitstruct = {0};
-	oscinitstruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-	oscinitstruct.HSEState = RCC_HSE_ON;
-	oscinitstruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
-	oscinitstruct.PLL.PLLState = RCC_PLL_ON;
-	oscinitstruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	oscinitstruct.PLL.PLLMUL = RCC_PLL_MUL9;
-	if (HAL_RCC_OscConfig(&oscinitstruct)!= HAL_OK)
-	{
-		/* Initialization Error */
-		while(1) {}
-	}
-
-	/* Select PLL as system clock source and configure the HCLK (AHB), PCLK1 (APB1), PCLK2 (APB2) clocks */
-	RCC_ClkInitTypeDef clkinitstruct = {0};
-	clkinitstruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-	clkinitstruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK; /* 72 MHz */
-	clkinitstruct.AHBCLKDivider = RCC_SYSCLK_DIV1; /* AHB at 72 MHz*/
-	clkinitstruct.APB1CLKDivider = RCC_HCLK_DIV2; /* APB1 at 36 MHz*/
-	clkinitstruct.APB2CLKDivider = RCC_HCLK_DIV1; /* APB2 at 72 MHz */
-
-	if (HAL_RCC_ClockConfig(&clkinitstruct, FLASH_LATENCY_2)!= HAL_OK)
-	{
-		/* Initialization Error */
-		while(1) {}
-	}
-}
-
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
-int _TrigFault(int nA, int nB)
-{
-	UNUSED(nA); UNUSED(nB);
-
-//	*(int*)(_Blink) = nA;	// Bus Fault: Write read only flash.
-//	return (nA / nB);  // Usage Fault: Devide by Zero.
-//	asm volatile(".word	0xFFAACCBB"); // Usage Fault: Inst decode failure.
-
-	// Unaligned access.
-	uint8_t aByte[8] = {0,};
-	printf("Ch Value: %2X %2X %2X %2X\n",
-		aByte[0], aByte[1], aByte[2], aByte[3]);
-	*((uint32_t*)(aByte + 1)) = 10;
-	printf("Ch Value: %2X %2X %2X %2X\n",
-		aByte[0], aByte[1], aByte[2], aByte[3]);
-
-	return 0;
-}
-#pragma GCC pop_options
-
-int main(int argc, char* argv[])
-{
-	UNUSED(argc);
-	UNUSED(argv);
-
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
 
-	_GpioInit();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-	_ClockInit();
-//	_Blink(1000, 10);
-
-	_Blink(MSEC(500), 10);
 	print_init();
-	printf("\n\nFW build %s\n", gpVersion);
-	int nCnt = 0;
-	while(1)
-	{
-		printf("Loop: %8X\n", nCnt++);
-		_TrigFault(20, 0);
-		_Blink(MSEC(200), 10);
-	}
-	return 0;
+	printf("\n\nBuild at: %s %s\n", __DATE__, __TIME__);
+	while(1);
 }
 
-#pragma GCC diagnostic pop
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-// ----------------------------------------------------------------------------
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+}
+
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
+}
+
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */

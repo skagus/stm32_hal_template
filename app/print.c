@@ -26,15 +26,16 @@ void print_init(void)
 	ghUART1.Init.Parity = UART_PARITY_NONE;
 	ghUART1.Init.Mode = UART_MODE_TX_RX;
 	ghUART1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	ghUART1.Init.OverSampling = UART_OVERSAMPLING_16;
 	if(HAL_OK !=  HAL_UART_Init(&ghUART1))
 	{
-		//
+		while(1);
 	}
 }
 
 int puts(const char* szString)
 {
-	HAL_UART_Transmit(&ghUART1, (uint8_t*)szString, strlen(szString), 100000);
+	HAL_UART_Transmit(&ghUART1, (uint8_t*)szString, strlen(szString), 100);
 	return 0;
 }
 
@@ -48,8 +49,15 @@ int printf(const char* szFmt, ...)
 	len = vsprintf(buffer, szFmt, ap);
 	va_end(ap);
 
-	HAL_UART_Transmit(&ghUART1, (uint8_t*)buffer, len, 100000);
+	HAL_UART_Transmit(&ghUART1, (uint8_t*)buffer, len, 100);
 	return len;
 }
+
+int myPuts(const char* szString)
+{
+	HAL_UART_Transmit(&ghUART1, (uint8_t*)szString, strlen(szString), 100);
+	return 0;
+}
+
 #endif
 

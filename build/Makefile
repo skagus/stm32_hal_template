@@ -26,22 +26,24 @@ CSRC =	\
 		hal/stm32f1xx_hal_rcc.c \
 		hal/stm32f1xx_hal_gpio.c \
 		hal/stm32f1xx_hal_uart.c \
-		mcu/system_stm32f1xx.c \
 		app/main.c \
 		app/print.c \
-		app/stm32f1xx_it.c \
-		$(VER_FILE)
+		app/stm32f1xx_hal_msp.c \
+		app/system_stm32f1xx.c \
+		app/stm32f1xx_it.c
+
 
 #		src/flash_spi.c \
 
 CPPSRC =
 
 ASRC =
-#startup/startup_stm32f103x6.S
+
+#ASRC = startup/startup_stm32f103c8tx.S
 
 DATA =
 
-LINK_SCRIPT = startup/sections.ld
+LINK_SCRIPT = startup/STM32F103C8TX_FLASH.ld
 #LINK_SCRIPT += startup/mem.ld
 
 ################ Object ##############
@@ -56,7 +58,7 @@ DEP =	$(OBJ:%.o=%.d)
 ################  Define
 DEFINE = 
 # STM32F103C8T6 <-- MD performance.
-DEFINE += -DSTM32F103x6
+DEFINE += -DSTM32F103xB
 DEFINE += -DUSE_HAL_DRIVER
 #DEFINE += -DHSE_VALUE=8000000
 ################  Library directory.
@@ -76,6 +78,7 @@ PRJ_INC = \
 		mcu \
 		hal \
 		app
+
 		
 
 # Add absolue path. (ex. c:/lib/inc)
@@ -101,7 +104,7 @@ FLAGS += -fshort-enums
 #FLAGS += -fpack-struct  # CAUTION: RISC-V can't handle un-aligned load/save.
 FLAGS += -fmessage-length=0
 
-FLAGS += -O1
+FLAGS += -Ofast
 #FLAGS += -msave-restore 
 FLAGS += -ffunction-sections
 FLAGS += -fdata-sections 
@@ -111,6 +114,7 @@ FLAGS += -g
 FLAGS += -Wa,-adhlns=$(@:.o=.lst)
 FLAGS += -gdwarf-2
 FLAGS += -Wno-comment
+
 
 ifeq ($(BUILD_STRICT), TRUE)
 FLAGS += -Wall
@@ -131,6 +135,7 @@ CFLAGS += $(DEFINE)
 CFLAGS += $(INCLUDE)
 # CFLAGS += -fstack-usage  # show stack usage for each function.
 CFLAGS += -fcallgraph-info  # make call graph information.
+CFLAGS += -fstack-usage
 #CFLAGS += -fdump-tree-optimized #
 #CFLAGS += -fdump-rtl-dfinish  # 
 ################  C++ Options
@@ -175,6 +180,7 @@ LDFLAGS += $(LDS_OPT)
 #LDFLAGS += -fstack-usage
 LDFLAGS += -nostartfiles
 #LDFLAGS += -nodefaultlibs
+#LDFLAGS += static
 #LDFLAGS += -nolibc
 #LDFLAGS += -nostdlib
 LDFLAGS += -Xlinker --gc-sections

@@ -7,11 +7,11 @@
 
 typedef void (*IsrFunc)(void);
 
-extern unsigned long _sidata;
-extern unsigned long _sdata;
-extern unsigned long _edata;
-extern unsigned long _sbss;
-extern unsigned long _ebss;
+extern unsigned char _sidata;
+extern unsigned char _sdata;
+extern unsigned char _edata;
+extern unsigned char _sbss;
+extern unsigned char _ebss;
 
 const IsrFunc gaVectorTable[];
 
@@ -46,7 +46,12 @@ void __attribute__((weak)) __libc_init_array(void) {}
 void __attribute__((naked)) Reset_Handler(void);
 void Reset_Handler(void)
 {
-
+#if 0
+	uint32_t size = &_edata - &_sdata;
+	memcpy(&_sdata, &_sidata, size);
+	size = &_ebss - &_sbss;
+	memset(&_sbss, 0, size);
+#else
 	unsigned long *src, *dst;
 	src = &_sidata;
 	dst = &_sdata;
@@ -62,12 +67,12 @@ void Reset_Handler(void)
 	{
 		*(dst++) = 0;
 	}
-
+#endif
 	SystemInit();
 //	__libc_init_array(); // Should call this if C++
 	SCB->VTOR = gaVectorTable;
-	SystemCoreClockUpdate();
-	_InitFault();
+//	SystemCoreClockUpdate();
+//	_InitFault();
 	main();
 	while (1);
 }
