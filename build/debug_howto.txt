@@ -1,0 +1,15 @@
+
+Open OCD.
+	이 SW의 역할은 stlink같은 jtag, swd 장치와 연결되어, GDB server를 만들어 준다. 
+	GDB server는 elf 같은 symbol awareness는 없고,
+	Memory, Register, CSR 같은 HW에서 정의된 것을 access하는 능력만 있는 듯.. 
+
+GDB
+	Open OCD에 remote로 연결하여, 디버깅을 하는 역할. 
+	elf를 파싱하여, symbol level의 awareness를 가진다.
+	gdb는 터미널이 있어서, CLI로 변수 이름으로 변수를 보여준다.
+	struct도 파싱하여 필드이름과 같이 보여줌.
+
+VSCode (Cortex Debug에서 Cortex M 잘 됨.)
+	VS code에서는 gdb를 실행, CLI 명령어 전달 --> 다시 파싱하여 
+	VSCode GUI에서 보여주는 역할.
