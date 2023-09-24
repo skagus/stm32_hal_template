@@ -7,8 +7,8 @@ OBJDIR = obj
 MCU = cortex-m3
 #MCU =rv64imc
 
-BUILD_STRICT = TRUE
-BUILD_PRINT = TRUE
+BUILD_STRICT = FALSE
+BUILD_PRINT = FALSE
 
 ifeq ($(BUILD_PRINT), TRUE)
 ECHO = 
@@ -105,16 +105,17 @@ FLAGS += -fshort-enums
 FLAGS += -fmessage-length=0
 
 FLAGS += -Ofast
+FLAGS += -flto
 #FLAGS += -msave-restore 
 FLAGS += -ffunction-sections
 FLAGS += -fdata-sections 
 #FLAGS += -fno-unit-at-a-time
 #FLAGS += -mshort-calls
+
 FLAGS += -g
 FLAGS += -Wa,-adhlns=$(@:.o=.lst)
 FLAGS += -gdwarf-2
 FLAGS += -Wno-comment
-
 
 ifeq ($(BUILD_STRICT), TRUE)
 FLAGS += -Wall
@@ -133,11 +134,12 @@ CFLAGS  = $(FLAGS)
 CFLAGS += $(DEP_OPT)
 CFLAGS += $(DEFINE)
 CFLAGS += $(INCLUDE)
-# CFLAGS += -fstack-usage  # show stack usage for each function.
+# For more information.
+CFLAGS += -fstack-usage  # .su, show stack usage for each function.
 CFLAGS += -fcallgraph-info  # make call graph information.
-CFLAGS += -fstack-usage
 #CFLAGS += -fdump-tree-optimized #
-#CFLAGS += -fdump-rtl-dfinish  # 
+#CFLAGS += -fdump-rtl-all  # 
+
 ################  C++ Options
 CPPFLAGS  = $(FLAGS)
 CPPFLAGS += $(DEP_OPT)
@@ -177,14 +179,14 @@ LDS_OPT = $(patsubst %, -T $(PRJ_TOP)/%, $(LINK_SCRIPT))
 LDFLAGS = -g
 LDFLAGS += -Wl,-Map=$(TARGET).map,--cref
 LDFLAGS += $(LDS_OPT)
-#LDFLAGS += -fstack-usage
 LDFLAGS += -nostartfiles
 #LDFLAGS += -nodefaultlibs
 #LDFLAGS += static
 #LDFLAGS += -nolibc
 #LDFLAGS += -nostdlib
-LDFLAGS += -Xlinker --gc-sections
-LDFLAGS += -Xlinker --print-memory-usage
+LDFLAGS += -Wl,--gc-sections
+#LDFLAGS += -Wl,--print-gc-sections
+LDFLAGS += -Wl,--print-memory-usage
 LDFLAGS += -mcpu=$(MCU)
 LDFLAGS += --specs=nosys.specs
 LDFLAGS += --specs=nano.specs
@@ -198,14 +200,13 @@ LDFLAGS += -fno-common
 
 ################### Action #################
 # add @ for silent.
-GNU_PRIFIX = arm-none-eabi-
 
-CC 		= $(GNU_PRIFIX)gcc
-OBJCOPY	= $(GNU_PRIFIX)objcopy
-OBJDUMP	= $(GNU_PRIFIX)objdump
-SIZE	= $(GNU_PRIFIX)size
-AR		= $(GNU_PRIFIX)ar rcs
-NM		= $(GNU_PRIFIX)nm
+CC 		= $(GNU_PREFIX)gcc
+OBJCOPY	= $(GNU_PREFIX)objcopy
+OBJDUMP	= $(GNU_PREFIX)objdump
+SIZE	= $(GNU_PREFIX)size
+AR		= $(GNU_PREFIX)ar rcs
+NM		= $(GNU_PREFIX)nm
 
 SHELL = sh
 REMOVE = rm -f
@@ -238,6 +239,9 @@ $(OBJDIR)/%.s.o : $(PRJ_TOP)/%.S
 
 ################### File Creation #################
 all: elf bin lst hex size
+clean: clean_obj clean_target
+
+relink: clean_target elf lst hex size
 
 $(PRJ_TOP)/$(VER_FILE):
 	$(INFO)
@@ -288,7 +292,6 @@ bin: $(TARGET).bin $(TARGET).hex
 lst: $(TARGET).lss $(TARGET).sym
 
 size: $(TARGET).elf
-	$(INFO)
 	@$(SIZE) --format=gnu $<
 	@$(SIZE) --format=sysv --radix=16 --common $<
 
@@ -306,13 +309,15 @@ run: $(TARGET).bin
 
 # Display compiler version information.
 gccversion : 
-	$(ECHO)$(CC) --version
+	$(CC) --version
 
-clean:
+clean_target:
 	$(REMOVE) $(TARGET).elf $(TARGET).a \
 			$(TARGET).hex $(TARGET).bin \
 			$(TARGET).lss $(TARGET).sym \
 			$(TARGET).map
+
+clean_obj:
 	$(REMOVEDIR) $(OBJDIR)
 
 # Include the dependency files.

@@ -87,7 +87,7 @@ int main(void)
 	SystemClock_Config();
 
 	print_init();
-	printf("\n\nBuild at: %s %s\n", __DATE__, __TIME__);
+	printf("\n\nNew Build at: %s %s\n", __DATE__, __TIME__);
 	while(1);
 }
 
