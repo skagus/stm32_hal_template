@@ -1,0 +1,5 @@
+init
+
+#program templ.bin verify 0x08000000
+
+reset

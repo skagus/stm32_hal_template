@@ -53,6 +53,8 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+int myPrintf(const char* szFmt, ...);
+int myPuts(const char* szString);
 
 /* USER CODE END EFP */
 

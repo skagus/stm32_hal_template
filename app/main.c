@@ -17,9 +17,9 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <stdio.h>
+//#include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
+//#include <stdarg.h>
 #include "stm32f1xx.h"
 #include "main.h"
 
@@ -59,18 +59,6 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-#define MAX_BUF_SIZE		(64)
-static char gaBuf[MAX_BUF_SIZE];
-void myPrintf(const char* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    vsprintf(gaBuf, format, ap);
-    va_end(ap);
-
-	int nLen = strlen(gaBuf);
-	HAL_UART_Transmit(&huart1, (uint8_t*)gaBuf, nLen, 100);
-}
 /* USER CODE END 0 */
 
 /**
@@ -85,9 +73,11 @@ int main(void)
 
 	/* Configure the system clock */
 	SystemClock_Config();
+	MX_GPIO_Init();
+	MX_USART1_UART_Init();
 
-	print_init();
-	printf("\n\nNew Build at: %s %s\n", __DATE__, __TIME__);
+	extern const char* gpVersion;
+	myPrintf("\nVER: %s\n", gpVersion);
 	while(1);
 }
 
